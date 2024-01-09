@@ -11,9 +11,10 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   final TextEditingController _messageController = TextEditingController();
-  int _lastIndex = 0;
+
   @override
   Widget build(BuildContext context) {
+    User user = FirebaseAuth.instance.currentUser!;
     return Scaffold(
       appBar: AppBar(
         title: const Text('채팅룸'),
@@ -32,37 +33,78 @@ class _MainPageState extends State<MainPage> {
           stream: FirebaseDatabase.instance.ref().child('chats').onValue, 
           builder: (context, snapshot){
             List data = (snapshot.data?.snapshot.value ?? []) as List;
-            _lastIndex = data.isNotEmpty ? data.length: 0;
 
-            return ListView.builder(
-              itemBuilder: (context, index) => ListTile(
-                title: Text(data[index]['message']),
-                subtitle: Text(data[index]['name']),
-              ),
-              itemCount: data.length,
-            );
-          },
-        ),
+            data = data.reversed.toList();
+
+            return Expanded(
+              child: ListView.builder(
+                reverse: true,
+                    itemBuilder: (context, index) {
+                      return Column(
+                        crossAxisAlignment: user.uid == data[index]['uid']
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                        children: [
+                          Text(data[index]['name']),
+                          GestureDetector(
+                            onLongPress: () {
+                              if(user.uid != data[index]['uid'])return;
+
+                              FirebaseDatabase.instance
+                                  .ref()
+                                  .child('chats')
+                                  .update({
+                                  '${(index - (data.length -1)).abs()}': {
+                                    'uid':user.uid,
+                                    'name':user.displayName,
+                                    'message': null,
+                                    },
+                                });
+                            },
+                            child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Text(
+                                data[index]['message'] ,
+                                style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                              ),
+                          ),
+                          )
+                        ],
+                      );
+                    },
+                    itemCount: data.length,
+                  ),
+                );
+            },
+          ),
         Row(
         children: [
-          const Expanded(
+          Expanded(
             child: TextField(
               controller: _messageController,
             ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 User user = FirebaseAuth.instance.currentUser!;
+                DataSnapshot data = await FirebaseDatabase.instance
+                  .ref()
+                  .child('chats')
+                  .get();
+
+                print(user.displayName);
 
                 FirebaseDatabase.instance.ref().child('chats').update({
-                  '${user.uid}:${DateTime}': {
-                    'udi':user.uid,
+                  '${data.children.length}': {
+                    'uid':user.uid,
                     'name':user.displayName,
                     'message': _messageController.text,
                     },
-                    });
-                    FocusScope.of(context).unfocus();
-                    _messageController.clear();
+                  });
+                  FocusScope.of(context).unfocus();
+                  _messageController.clear();
               }, 
               child: const Text('전송'),
               ),

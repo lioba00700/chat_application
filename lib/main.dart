@@ -1,3 +1,4 @@
+import 'package:chat_application/page/main_page/main_page.dart';
 import 'package:chat_application/page/signin_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -6,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   FirebaseApp app = await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
 );
@@ -31,8 +33,7 @@ class MyApp extends StatelessWidget {
         stream: FirebaseAuth.instance.userChanges(),
         builder: (context, snapshot) {
           if(snapshot.hasData && snapshot.data != null){
-            //TODO: 채팅 페이지
-            return Placeholder();
+            return MainPage();
           } else {
             return SigninPage();
           }
