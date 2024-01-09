@@ -65,7 +65,7 @@ class _MainPageState extends State<MainPage> {
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
                               child: Text(
-                                data[index]['message'] ,
+                                data[index]['message'] ??  '삭제된 메시지 입니다.',
                                 style: Theme.of(context).textTheme.titleMedium,
                                 ),
                               ),
